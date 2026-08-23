@@ -151,10 +151,9 @@
 				config.yearStartOffsetDays
 		);
 
-		if (!(
-			(d.getFullYear() % 4 === 0 && d.getFullYear() % 100 !== 0) ||
-			d.getFullYear() % 400 === 0
-		)) {
+		if (
+			!((d.getFullYear() % 4 === 0 && d.getFullYear() % 100 !== 0) || d.getFullYear() % 400 === 0)
+		) {
 			days++;
 		}
 		if (days < 0) {
