@@ -249,7 +249,9 @@
 		} else if (days === 365) {
 			dateFormat = korean ? '크폴잔큐브' : 'Кползанкюв';
 		} else {
-			dateFormat = korean ? `${season} ${SKASOJBO_KOREAN[days % 73]}` : `${SKASOJBO[days % 73]} ${season}`;
+			dateFormat = korean
+				? `${season} ${SKASOJBO_KOREAN[days % 73]}`
+				: `${SKASOJBO[days % 73]} ${season}`;
 		}
 
 		year = (korean ? SKASOJBO_KOREAN : SKASOJBO)[(year - 2000 + 25) % 72];
@@ -307,14 +309,18 @@
 <div
 	style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column;"
 >
-	<div style="max-width: 1280px; text-align: center;">
+	<div
+		style="max-width: 1280px; text-align: center; gap: 32px; display: flex; justify-content: center; align-items: center;"
+	>
 		<div>
+			<div style="font-size: 12px;">자소크력</div>
 			<div style="font-size: 32px;">{formatZasokeseDate(today)}</div>
-			<div style="font-size: 12px;">{formatZasokeseDate(today, true)}</div>
+			<div>{formatZasokeseDate(today, true)}</div>
 		</div>
 		<div>
+			<div style="font-size: 12px;">보베르타력</div>
 			<div style="font-size: 32px;">{formatBovertDate(today)}</div>
-			<div style="font-size: 12px;">{formatBovertDate(today, true)}</div>
+			<div>{formatBovertDate(today, true)}</div>
 		</div>
 	</div>
 	<div
