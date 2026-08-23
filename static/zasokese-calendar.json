@@ -1,0 +1,36 @@
+{
+  "months": [
+    "T'Hítal",
+    "Télital",
+    "Tésotal",
+    "Téfatal",
+    "Tíltal",
+    "Técetal",
+    "Téshetal",
+    "Táital",
+    "Téfetal",
+    "Tédostal",
+    "Tédosital",
+    "Tédoslital"
+  ],
+  "eras": [
+    {
+      "startDate": "2012-06-17",
+      "name": "Tlaca",
+      "koreanName": "틀라카",
+      "baseYear": 2012
+    },
+    {
+      "startDate": "2000-07-15",
+      "name": "Vonven",
+      "koreanName": "본벤",
+      "baseYear": 2000
+    },
+    {
+      "startDate": "0001-01-01",
+      "name": "Zasozesta",
+      "koreanName": "자소크력",
+      "baseYear": -4282
+    }
+  ]
+}

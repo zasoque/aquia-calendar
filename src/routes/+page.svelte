@@ -150,26 +150,60 @@
 		'돌례크'
 	];
 
-	const ZASOKESE_MONTHS = [
-		"T'Hítal",
-		'Télital',
-		'Tésotal',
-		'Téfatal',
-		'Tíltal',
-		'Técetal',
-		'Téshetal',
-		'Táital',
-		'Téfetal',
-		'Tédostal',
-		'Tédosital',
-		'Tédoslital'
-	];
+	type ImperialEra = {
+		startDate: string;
+		name: string;
+		koreanName: string;
+		baseYear: number;
+	};
 
-	let urlParams,
-		dateParam,
-		today = $state(new Date('2000-07-15'));
+	type ImperialCalendarConfig = {
+		months: string[];
+		eras: ImperialEra[];
+	};
 
-	function formatZasokeseDate(d: date, korean: boolean = false): string {
+	const DEFAULT_DATE_OFFSET = 196;
+	const MIN_DATE_OFFSET = -730_119; // 0001-01-01
+	const MAX_DATE_OFFSET = 2_921_939; // 9999-12-31
+
+	let today = $state(new Date('2000-07-15'));
+	let imperialCalendar = $state<ImperialCalendarConfig | null>(null);
+	let imperialCalendarError = $state('');
+
+	function isImperialCalendarConfig(value: unknown): value is ImperialCalendarConfig {
+		if (typeof value !== 'object' || value === null) return false;
+
+		const config = value as Record<string, unknown>;
+		if (
+			!Array.isArray(config.months) ||
+			config.months.length !== 12 ||
+			!config.months.every((month) => typeof month === 'string' && month.length > 0) ||
+			!Array.isArray(config.eras) ||
+			config.eras.length === 0
+		) {
+			return false;
+		}
+
+		return config.eras.every((era) => {
+			if (typeof era !== 'object' || era === null) return false;
+			const item = era as Record<string, unknown>;
+			return (
+				typeof item.startDate === 'string' &&
+				/^\d{4}-\d{2}-\d{2}$/.test(item.startDate) &&
+				typeof item.name === 'string' &&
+				item.name.length > 0 &&
+				typeof item.koreanName === 'string' &&
+				item.koreanName.length > 0 &&
+				Number.isSafeInteger(item.baseYear)
+			);
+		});
+	}
+
+	function formatZasokeseDate(
+		d: Date,
+		config: ImperialCalendarConfig,
+		korean: boolean = false
+	): string {
 		const day = d.getDate();
 		const month = d.getMonth() + 1; // Months are zero-based in JavaScript
 
@@ -178,35 +212,32 @@
 			throw new Error('Month must be between 1 and 12');
 		}
 
-		// year
-		let gengou;
-		let year;
-		if (d >= new Date('2012-06-17')) {
-			gengou = korean ? '틀라카' : 'Tlaca';
-			year = d.getFullYear() - 2012;
-		} else if (d >= new Date('2000-07-15')) {
-			gengou = korean ? '본벤' : 'Vonven';
-			year = d.getFullYear() - 2000;
-		} else {
-			gengou = korean ? '자소크력' : 'Zasozesta';
-			year = d.getFullYear() - 2000 + 6282;
-		}
+		const dateKey = `${String(d.getFullYear()).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+		const era = [...config.eras]
+			.sort((a, b) => b.startDate.localeCompare(a.startDate))
+			.find((candidate) => dateKey >= candidate.startDate);
+
+		if (!era) throw new Error('No imperial era is configured for this date');
+
+		const gengou = korean ? era.koreanName : era.name;
+		const year = d.getFullYear() - era.baseYear;
 
 		return korean
 			? `${gengou} ${year === 0 ? '원년' : year + '년'} ${month}월 ${day}일`
-			: `${gengou} ${year}, ${day} ${ZASOKESE_MONTHS[month - 1]}`;
+			: `${gengou} ${year}, ${day} ${config.months[month - 1]}`;
 	}
 
-	function formatBovertDate(d: date, korean: boolean = false): string {
+	function formatBovertDate(d: Date, korean: boolean = false): string {
 		let year = d.getFullYear();
 
 		let days = Math.floor(
 			(d.getTime() - new Date(`${d.getFullYear()}-01-01`).getTime()) / (1000 * 60 * 60 * 24) - 104
 		);
 
-		if (
-			!((d.getFullYear() % 4 === 0 && d.getFullYear() % 100 !== 0) || d.getFullYear() % 400 === 0)
-		) {
+		if (!(
+			(d.getFullYear() % 4 === 0 && d.getFullYear() % 100 !== 0) ||
+			d.getFullYear() % 400 === 0
+		)) {
 			days++;
 		}
 		if (days < 0) {
@@ -254,9 +285,10 @@
 				: `${SKASOJBO[days % 73]} ${season}`;
 		}
 
-		year = (korean ? SKASOJBO_KOREAN : SKASOJBO)[(year - 2000 + 25) % 72];
+		const yearIndex = (((year - 2000 + 25) % 72) + 72) % 72;
+		const yearName = (korean ? SKASOJBO_KOREAN : SKASOJBO)[yearIndex];
 
-		return korean ? `${year} ${dateFormat}` : `${dateFormat} ${year}`;
+		return korean ? `${yearName} ${dateFormat}` : `${dateFormat} ${yearName}`;
 	}
 
 	function toPreviousDay() {
@@ -295,12 +327,30 @@
 		today = new Date(today.getTime() - timezoneOffset);
 	}
 
-	onMount(() => {
-		urlParams = new URLSearchParams(window.location.search);
-		dateParam = parseInt(urlParams.get('date') || '196');
+	onMount(async () => {
+		try {
+			const response = await fetch('/zasokese-calendar.json', { cache: 'no-store' });
+			if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+			const config: unknown = await response.json();
+			if (!isImperialCalendarConfig(config)) throw new Error('Invalid configuration');
+			imperialCalendar = config;
+		} catch (error) {
+			console.error('Failed to load the imperial calendar configuration', error);
+			imperialCalendarError = '제국력 설정을 불러오지 못했습니다.';
+		}
+
+		const rawDate = new URLSearchParams(window.location.search).get('date');
+		const parsedDate = rawDate !== null && /^-?\d{1,7}$/.test(rawDate) ? Number(rawDate) : NaN;
+		const dateOffset =
+			Number.isSafeInteger(parsedDate) &&
+			parsedDate >= MIN_DATE_OFFSET &&
+			parsedDate <= MAX_DATE_OFFSET
+				? parsedDate
+				: DEFAULT_DATE_OFFSET;
 
 		today = new Date('2000-01-01');
-		today.setDate(today.getDate() + dateParam);
+		today.setDate(today.getDate() + dateOffset);
 		const timezoneOffset = today.getTimezoneOffset() * 60000; // in milliseconds
 		today = new Date(today.getTime() - timezoneOffset);
 	});
@@ -314,8 +364,14 @@
 	>
 		<div>
 			<div style="font-size: 12px;">자소크력</div>
-			<div style="font-size: 32px;">{formatZasokeseDate(today)}</div>
-			<div>{formatZasokeseDate(today, true)}</div>
+			{#if imperialCalendar}
+				<div style="font-size: 32px;">{formatZasokeseDate(today, imperialCalendar)}</div>
+				<div>{formatZasokeseDate(today, imperialCalendar, true)}</div>
+			{:else if imperialCalendarError}
+				<div role="alert">{imperialCalendarError}</div>
+			{:else}
+				<div>설정 불러오는 중…</div>
+			{/if}
 		</div>
 		<div>
 			<div style="font-size: 12px;">보베르타력</div>
@@ -326,12 +382,12 @@
 	<div
 		style="display: flex; justify-content: center; align-items: center; gap: 24px; margin-top: 16px;"
 	>
-		<div class="clickable" onclick={toPreviousYear}>← 년</div>
-		<div class="clickable" onclick={toPreviousMonth}>← 월</div>
-		<div class="clickable" onclick={toPreviousDay}>← 일</div>
-		<div class="clickable" onclick={toNextDay}>일 →</div>
-		<div class="clickable" onclick={toNextMonth}>월 →</div>
-		<div class="clickable" onclick={toNextYear}>년 →</div>
+		<button type="button" class="clickable" onclick={toPreviousYear}>← 년</button>
+		<button type="button" class="clickable" onclick={toPreviousMonth}>← 월</button>
+		<button type="button" class="clickable" onclick={toPreviousDay}>← 일</button>
+		<button type="button" class="clickable" onclick={toNextDay}>일 →</button>
+		<button type="button" class="clickable" onclick={toNextMonth}>월 →</button>
+		<button type="button" class="clickable" onclick={toNextYear}>년 →</button>
 	</div>
 </div>
 
@@ -339,8 +395,10 @@
 	.clickable {
 		cursor: pointer;
 		padding: 8px 16px;
+		border: 0;
 		background-color: #f0f0f0;
 		border-radius: 4px;
+		font: inherit;
 		transition: background-color 0.3s;
 	}
 

@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^7.0.1",
-    "@sveltejs/kit": "^2.63.0",
+    "@sveltejs/kit": "^2.70.3",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "prettier": "^3.8.3",
     "prettier-plugin-svelte": "^4.1.0",
@@ -26,5 +26,8 @@
   },
   "dependencies": {
     "@sveltejs/adapter-static": "^3.0.10"
+  },
+  "overrides": {
+    "cookie": "^0.7.2"
   }
 }
