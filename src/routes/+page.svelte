@@ -1,155 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	const SKASOJBO = [
-		'Сойбо',
-		'Шивак',
-		'Сиоть',
-		'Нязтам',
-		'Ракса',
-		'Зоста',
-		'Жасе',
-		'Велек',
-		'Добо',
-		'Сойвак',
-		'Шиоть',
-		'Ситам',
-		'Нясьа',
-		'Ракста',
-		'Зосе',
-		'Жалек',
-		'Вебо',
-		'Довак',
-		'Соёть',
-		'Шитам',
-		'Сиса',
-		'Нясьта',
-		'Раксе',
-		'Золек',
-		'Жабо',
-		'Вевак',
-		'Дооть',
-		'Сойтам',
-		'Шиса',
-		'Систа',
-		'Нясье',
-		'Раклек',
-		'Зобо',
-		'Жавак',
-		'Веоть',
-		'Дотам',
-		'Сойса',
-		'Шиста',
-		'Сисе',
-		'Нязлек',
-		'Ракбо',
-		'Зовак',
-		'Жаоть',
-		'Ветам',
-		'Доса',
-		'Сойста',
-		'Шисе',
-		'Силек',
-		'Нязбо',
-		'Раквак',
-		'Зооть',
-		'Жатам',
-		'Веса',
-		'Доста',
-		'Сойсе',
-		'Шилек',
-		'Сибо',
-		'Нязвак',
-		'Ракоть',
-		'Зотам',
-		'Жаса',
-		'Веста',
-		'Досе',
-		'Сойлек',
-		'Шибо',
-		'Сивак',
-		'Нязоть',
-		'Рактам',
-		'Зоса',
-		'Жаста',
-		'Весе',
-		'Долек'
-	];
-	const SKASOJBO_KOREAN = [
-		'소이보',
-		'쉬바크',
-		'시오트',
-		'냐즈탐',
-		'라크사',
-		'조스타',
-		'쟈셰',
-		'볠례크',
-		'도보',
-		'소이바크',
-		'쉬오트',
-		'시탐',
-		'냐사',
-		'락스타',
-		'조셰',
-		'쟐례크',
-		'볘보',
-		'도바크',
-		'소요트',
-		'쉬탐',
-		'시사',
-		'냐스타',
-		'라크셰',
-		'졸례크',
-		'쟈보',
-		'볘바크',
-		'도오트',
-		'소이탐',
-		'쉬사',
-		'시스타',
-		'냐셰',
-		'라클례크',
-		'조보',
-		'쟈바크',
-		'볘오트',
-		'도탐',
-		'소이사',
-		'쉬스타',
-		'시셰',
-		'냐즐례크',
-		'라크보',
-		'조바크',
-		'쟈오트',
-		'볘탐',
-		'도사',
-		'소이스타',
-		'쉬셰',
-		'실례크',
-		'냐즈보',
-		'라크바크',
-		'조오트',
-		'쟈탐',
-		'볘사',
-		'도스타',
-		'소이셰',
-		'쉴례크',
-		'시보',
-		'냐즈바크',
-		'라코트',
-		'조탐',
-		'쟈사',
-		'볘스타',
-		'도셰',
-		'소일례크',
-		'쉬보',
-		'시바크',
-		'냐조트',
-		'라크탐',
-		'조사',
-		'쟈스타',
-		'볘셰',
-		'돌례크'
-	];
-
 	type ImperialEra = {
 		startDate: string;
 		name: string;
@@ -162,6 +13,26 @@
 		eras: ImperialEra[];
 	};
 
+	type BovertSeason = {
+		name: string;
+		koreanName: string;
+		lastDayName: string;
+		koreanLastDayName: string;
+	};
+
+	type BovertCalendarConfig = {
+		epochYear: number;
+		yearNameOffset: number;
+		yearStartOffsetDays: number;
+		daysPerSeason: number;
+		leapDayThreshold: number;
+		yearNames: string[];
+		koreanYearNames: string[];
+		seasons: BovertSeason[];
+		yearEndDayName: string;
+		koreanYearEndDayName: string;
+	};
+
 	const DEFAULT_DATE_OFFSET = 196;
 	const MIN_DATE_OFFSET = -730_119; // 0001-01-01
 	const MAX_DATE_OFFSET = 2_921_939; // 9999-12-31
@@ -169,6 +40,8 @@
 	let today = $state(new Date('2000-07-15'));
 	let imperialCalendar = $state<ImperialCalendarConfig | null>(null);
 	let imperialCalendarError = $state('');
+	let bovertCalendar = $state<BovertCalendarConfig | null>(null);
+	let bovertCalendarError = $state('');
 
 	function isImperialCalendarConfig(value: unknown): value is ImperialCalendarConfig {
 		if (typeof value !== 'object' || value === null) return false;
@@ -199,6 +72,45 @@
 		});
 	}
 
+	function isBovertCalendarConfig(value: unknown): value is BovertCalendarConfig {
+		if (typeof value !== 'object' || value === null) return false;
+
+		const config = value as Record<string, unknown>;
+		const yearNamesAreValid =
+			Array.isArray(config.yearNames) &&
+			config.yearNames.length > 0 &&
+			config.yearNames.every((name) => typeof name === 'string' && name.length > 0);
+		const koreanYearNamesAreValid =
+			Array.isArray(config.koreanYearNames) &&
+			config.koreanYearNames.length === (config.yearNames as unknown[])?.length &&
+			config.koreanYearNames.every((name) => typeof name === 'string' && name.length > 0);
+		const seasonsAreValid =
+			Array.isArray(config.seasons) &&
+			config.seasons.length > 0 &&
+			config.seasons.every((season) => {
+				if (typeof season !== 'object' || season === null) return false;
+				const item = season as Record<string, unknown>;
+				return ['name', 'koreanName', 'lastDayName', 'koreanLastDayName'].every(
+					(key) => typeof item[key] === 'string' && item[key].length > 0
+				);
+			});
+
+		return (
+			['epochYear', 'yearNameOffset', 'yearStartOffsetDays', 'leapDayThreshold'].every((key) =>
+				Number.isSafeInteger(config[key])
+			) &&
+			Number.isSafeInteger(config.daysPerSeason) &&
+			(config.daysPerSeason as number) > 1 &&
+			yearNamesAreValid &&
+			koreanYearNamesAreValid &&
+			seasonsAreValid &&
+			typeof config.yearEndDayName === 'string' &&
+			config.yearEndDayName.length > 0 &&
+			typeof config.koreanYearEndDayName === 'string' &&
+			config.koreanYearEndDayName.length > 0
+		);
+	}
+
 	function formatZasokeseDate(
 		d: Date,
 		config: ImperialCalendarConfig,
@@ -227,11 +139,16 @@
 			: `${gengou} ${year}, ${day} ${config.months[month - 1]}`;
 	}
 
-	function formatBovertDate(d: Date, korean: boolean = false): string {
+	function formatBovertDate(
+		d: Date,
+		config: BovertCalendarConfig,
+		korean: boolean = false
+	): string {
 		let year = d.getFullYear();
 
 		let days = Math.floor(
-			(d.getTime() - new Date(`${d.getFullYear()}-01-01`).getTime()) / (1000 * 60 * 60 * 24) - 104
+			(d.getTime() - new Date(`${d.getFullYear()}-01-01`).getTime()) / (1000 * 60 * 60 * 24) -
+				config.yearStartOffsetDays
 		);
 
 		if (!(
@@ -246,47 +163,33 @@
 		}
 
 		if (((year + 1) % 4 === 0 && (year + 1) % 100 !== 0) || (year + 1) % 400 === 0) {
-			if (days >= 261) {
+			if (days >= config.leapDayThreshold) {
 				days++;
 			}
 		}
 
-		let season;
-		if (Math.floor(days / 73) == 0) {
-			season = korean ? '화계' : 'Лёг';
-		} else if (Math.floor(days / 73) == 1) {
-			season = korean ? '서계' : 'Шеж';
-		} else if (Math.floor(days / 73) == 2) {
-			season = korean ? '양계' : 'Вуча';
-		} else if (Math.floor(days / 73) == 3) {
-			season = korean ? '설계' : 'Зе';
-		} else {
-			season = korean ? '용계' : 'Рено';
-		}
-
-		let dateFormat;
-		if (days % 73 === 72) {
-			if (season === 'Лёг') {
-				dateFormat = korean ? '크폴잔느료그' : 'Кползаньлёг';
-			} else if (season === 'Шеж') {
-				dateFormat = korean ? '크폴잔셰즈' : 'Кползаншеж';
-			} else if (season === 'Вуча') {
-				dateFormat = korean ? '크폴잔부차' : 'Кползанвуча';
-			} else if (season === 'Зе') {
-				dateFormat = korean ? '크폴잔졔' : 'Кползанзе';
-			} else if (season === 'Рено') {
-				dateFormat = korean ? '크폴잔느례노' : 'Кползаньрено';
-			}
+		const seasonIndex = Math.min(
+			Math.floor(days / config.daysPerSeason),
+			config.seasons.length - 1
+		);
+		const season = config.seasons[seasonIndex];
+		const dayIndex = days % config.daysPerSeason;
+		let dateFormat: string;
+		if (dayIndex === config.daysPerSeason - 1) {
+			dateFormat = korean ? season.koreanLastDayName : season.lastDayName;
 		} else if (days === 365) {
-			dateFormat = korean ? '크폴잔큐브' : 'Кползанкюв';
+			dateFormat = korean ? config.koreanYearEndDayName : config.yearEndDayName;
 		} else {
-			dateFormat = korean
-				? `${season} ${SKASOJBO_KOREAN[days % 73]}`
-				: `${SKASOJBO[days % 73]} ${season}`;
+			const seasonName = korean ? season.koreanName : season.name;
+			const dayName = (korean ? config.koreanYearNames : config.yearNames)[dayIndex];
+			dateFormat = korean ? `${seasonName} ${dayName}` : `${dayName} ${seasonName}`;
 		}
 
-		const yearIndex = (((year - 2000 + 25) % 72) + 72) % 72;
-		const yearName = (korean ? SKASOJBO_KOREAN : SKASOJBO)[yearIndex];
+		const names = korean ? config.koreanYearNames : config.yearNames;
+		const yearIndex =
+			(((year - config.epochYear + config.yearNameOffset) % names.length) + names.length) %
+			names.length;
+		const yearName = names[yearIndex];
 
 		return korean ? `${yearName} ${dateFormat}` : `${dateFormat} ${yearName}`;
 	}
@@ -340,6 +243,18 @@
 			imperialCalendarError = '제국력 설정을 불러오지 못했습니다.';
 		}
 
+		try {
+			const response = await fetch('/bovert-calendar.json', { cache: 'no-store' });
+			if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+			const config: unknown = await response.json();
+			if (!isBovertCalendarConfig(config)) throw new Error('Invalid configuration');
+			bovertCalendar = config;
+		} catch (error) {
+			console.error('Failed to load the Bovert calendar configuration', error);
+			bovertCalendarError = '보베르타력 설정을 불러오지 못했습니다.';
+		}
+
 		const rawDate = new URLSearchParams(window.location.search).get('date');
 		const parsedDate = rawDate !== null && /^-?\d{1,7}$/.test(rawDate) ? Number(rawDate) : NaN;
 		const dateOffset =
@@ -375,8 +290,14 @@
 		</div>
 		<div>
 			<div style="font-size: 12px;">보베르타력</div>
-			<div style="font-size: 32px;">{formatBovertDate(today)}</div>
-			<div>{formatBovertDate(today, true)}</div>
+			{#if bovertCalendar}
+				<div style="font-size: 32px;">{formatBovertDate(today, bovertCalendar)}</div>
+				<div>{formatBovertDate(today, bovertCalendar, true)}</div>
+			{:else if bovertCalendarError}
+				<div role="alert">{bovertCalendarError}</div>
+			{:else}
+				<div>설정 불러오는 중…</div>
+			{/if}
 		</div>
 	</div>
 	<div
