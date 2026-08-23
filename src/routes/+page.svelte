@@ -249,12 +249,12 @@
 		} else if (days === 365) {
 			dateFormat = korean ? '크폴잔큐브' : 'Кползанкюв';
 		} else {
-			dateFormat = `${(korean ? SKASOJBO_KOREAN : SKASOJBO)[days % 73]} ${season}`;
+			dateFormat = korean ? `${season} ${SKASOJBO_KOREAN[days % 73]}` : `${SKASOJBO[days % 73]} ${season}`;
 		}
 
 		year = (korean ? SKASOJBO_KOREAN : SKASOJBO)[(year - 2000 + 25) % 72];
 
-		return `${dateFormat} ${year}`;
+		return korean ? `${year} ${dateFormat}` : `${dateFormat} ${year}`;
 	}
 
 	function toPreviousDay() {
