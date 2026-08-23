@@ -326,11 +326,25 @@
 	<div
 		style="display: flex; justify-content: center; align-items: center; gap: 24px; margin-top: 16px;"
 	>
-		<div onclick={toPreviousYear}>← 년</div>
-		<div onclick={toPreviousMonth}>← 월</div>
-		<div onclick={toPreviousDay}>← 일</div>
-		<div onclick={toNextDay}>일 →</div>
-		<div onclick={toNextMonth}>월 →</div>
-		<div onclick={toNextYear}>년 →</div>
+		<div class="clickable" onclick={toPreviousYear}>← 년</div>
+		<div class="clickable" onclick={toPreviousMonth}>← 월</div>
+		<div class="clickable" onclick={toPreviousDay}>← 일</div>
+		<div class="clickable" onclick={toNextDay}>일 →</div>
+		<div class="clickable" onclick={toNextMonth}>월 →</div>
+		<div class="clickable" onclick={toNextYear}>년 →</div>
 	</div>
 </div>
+
+<style>
+	.clickable {
+		cursor: pointer;
+		padding: 8px 16px;
+		background-color: #f0f0f0;
+		border-radius: 4px;
+		transition: background-color 0.3s;
+	}
+
+	.clickable:hover {
+		background-color: #e0e0e0;
+	}
+</style>
