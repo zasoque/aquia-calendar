@@ -371,6 +371,18 @@
 		today = new Date(today.getTime() - timezoneOffset);
 	}
 
+	function toPreviousCycle() {
+		today = new Date(today.getFullYear() - 72, today.getMonth(), today.getDate());
+		const timezoneOffset = today.getTimezoneOffset() * 60000;
+		today = new Date(today.getTime() - timezoneOffset);
+	}
+
+	function toNextCycle() {
+		today = new Date(today.getFullYear() + 72, today.getMonth(), today.getDate());
+		const timezoneOffset = today.getTimezoneOffset() * 60000;
+		today = new Date(today.getTime() - timezoneOffset);
+	}
+
 	onMount(async () => {
 		try {
 			const response = await fetch('/zasokese-calendar.json', { cache: 'no-store' });
@@ -568,12 +580,14 @@
 	<div
 		style="display: flex; justify-content: center; align-items: center; gap: 24px; margin-top: 16px;"
 	>
+		<button type="button" class="clickable" onclick={toPreviousCycle}>← 72년</button>
 		<button type="button" class="clickable" onclick={toPreviousYear}>← 년</button>
 		<button type="button" class="clickable" onclick={toPreviousMonth}>← 월</button>
 		<button type="button" class="clickable" onclick={toPreviousDay}>← 일</button>
 		<button type="button" class="clickable" onclick={toNextDay}>일 →</button>
 		<button type="button" class="clickable" onclick={toNextMonth}>월 →</button>
 		<button type="button" class="clickable" onclick={toNextYear}>년 →</button>
+		<button type="button" class="clickable" onclick={toNextCycle}>72년 →</button>
 	</div>
 </div>
 
