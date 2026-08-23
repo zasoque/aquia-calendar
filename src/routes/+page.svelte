@@ -385,7 +385,7 @@
 
 	onMount(async () => {
 		try {
-			const response = await fetch('/zasokese-calendar.json', { cache: 'no-store' });
+			const response = await fetch('./zasokese-calendar.json', { cache: 'no-store' });
 			if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
 			const config: unknown = await response.json();
@@ -397,7 +397,7 @@
 		}
 
 		try {
-			const response = await fetch('/bovert-calendar.json', { cache: 'no-store' });
+			const response = await fetch('./bovert-calendar.json', { cache: 'no-store' });
 			if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
 			const config: unknown = await response.json();
